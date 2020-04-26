@@ -70,6 +70,22 @@ class ExampleCustom < Jets::Stack
   )
 end
 
+class MotherExample < Jets::Stack
+  resource(:mother_resource, "AWS::S3::Bucket")
+end
+
+class ChildExample < MotherExample
+  resource(:child_resource, "AWS::S3::Bucket")
+end
+
+class SubChildExample < ChildExample
+  resource(:sub_child_resource, "AWS::S3::Bucket")
+end
+
+class SubSubChildExample < SubChildExample
+  resource(:sub_sub_child_resource, "AWS::S3::Bucket")
+end
+
 # SecurityJob:
 #   Type: AWS::CloudFormation::Stack
 #   Properties:
@@ -144,6 +160,18 @@ describe "Stack templates" do
       expect(ExampleAlarm.functions.size).to eq 0
       expect(ExampleAlert.functions.size).to eq 0
       expect(Custom.functions.size).to eq 5
+    end
+  end
+
+  context "inheritance" do
+    it "can declare child resources on mother stack class" do
+      templates = MotherExample.new.resources.map(&:template)
+      expect(templates).to eq([
+        {"MotherResource"=>{"Type"=>"AWS::S3::Bucket"}},
+        {"ChildResource"=>{"Type"=>"AWS::S3::Bucket"}},
+        {"SubChildResource"=>{"Type"=>"AWS::S3::Bucket"}},
+        {"SubSubChildResource"=>{"Type"=>"AWS::S3::Bucket"}}
+      ])
     end
   end
 end
