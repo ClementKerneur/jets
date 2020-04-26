@@ -14,14 +14,16 @@ class Jets::Stack
     #
     # Example subclass: ExampleStack < Jets::Stack
     def initialize(subclass, *definition)
-      @subclass = stack_class_of(subclass.to_s.constantize).to_s # important to use to_s, dont want the object as keys in @definitions
+      @subclass = stack_class_of(subclass).to_s # important to use to_s, dont want the object as keys in @definitions
       @definition = definition.flatten
     end
 
     def stack_class_of(cls)
-      [nil, Jets::Stack].include?(cls.superclass) ? cls : stack_class_of(cls.superclass)
+      return cls unless Object.const_defined?(cls.to_s)
+      cls = cls.to_s.constantize
+      Jets::Stack == cls.superclass ? cls : stack_class_of(cls.superclass)
     end
-
+    
     def register
       self.class.register(@subclass, *@definition)
     end
