@@ -57,15 +57,20 @@ class Jets::Resource
       #   "AWS::Events::Rule" => "events.amazonaws.com",
       #   "AWS::Config::ConfigRule" => "config.amazonaws.com",
       #   "AWS::ApiGateway::Method" => "apigateway.amazonaws.com"
+      #   "AWS::Cognito::UserPool" => "cognito-idp.amazonaws.com"
+      #   "AWS::Cognito::IdentityPool" => "cognito-identity.amazonaws.com"
       def principal_map(type)
-        service = type.split('::')[1].downcase
-        service = special_principal_map(service)
+        resource_type = type.split('::')
+        service = resource_type[1].downcase
+        service = special_principal_map(service, resource_type[2])
         "#{service}.amazonaws.com"
       end
 
-      def special_principal_map(service)
+      def special_principal_map(service, resource)
         # special map
         # s3_event actually uses sns topic events to trigger a Lambda function
+        return 'cognito-idp' if service == 'cognito' && resource.start_with?('UserPool')
+        return 'cognito-identity' if service == 'cognito' && resource.start_with?('IdentityPool')
         map = { "s3" => "sns" }
         map[service] || service
       end
